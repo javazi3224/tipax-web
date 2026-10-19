@@ -148,6 +148,7 @@
     <div id="rowsList"></div>
 
     <button class="btn btn-primary" id="exportButton" style="margin-top:14px;">ساخت فایل اکسل و اشتراک‌گذاری</button>
+    <button class="btn btn-primary" id="saveButton" style="margin-top:8px;">ذخیره فایل اکسل در گوشی</button>
     <button class="btn btn-outline-danger" id="clearButton">پاک کردن لیست</button>
   </div>
 </div>
@@ -186,7 +187,6 @@
 <script>
 (function(){
 "use strict";
-
 /* ============================================================
    ثابت‌ها (دقیقاً هم‌خونی با نسخه‌ی اندروید و activation_tool.html)
    ============================================================ */
@@ -357,7 +357,6 @@ function proceedToApp() {
   mainScreen.classList.remove("hidden");
   initMainScreen();
 }
-
 /* ============================================================
    صفحه‌ی اصلی: فرم و لیست مرسولات
    ============================================================ */
@@ -539,7 +538,6 @@ document.getElementById("changePwdSaveBtn").addEventListener("click", async () =
   changePwdModal.classList.remove("show");
   alert("رمز با موفقیت عوض شد.");
 });
-
 /* ============================================================
    ساخت فایل اکسل (دقیقاً همون منطق نسخه‌ی اندروید، با JSZip)
    ============================================================ */
@@ -578,19 +576,27 @@ async function buildExcelBlob(rowsData) {
   return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 }
 
-document.getElementById("exportButton").addEventListener("click", async () => {
+function makeExcelFileName() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  return `tipax_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.xlsx`;
+}
+
+async function runExcelAction(btn, mode) {
   if (rows.length === 0) { alert("اول حداقل یه ردیف به لیست اضافه کن."); return; }
-  const btn = document.getElementById("exportButton");
   const originalText = btn.textContent;
   btn.textContent = "در حال ساخت فایل...";
   btn.disabled = true;
   try {
     const blob = await buildExcelBlob(rows);
-    const now = new Date();
-    const pad = n => String(n).padStart(2, "0");
-    const fileName = `tipax_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.xlsx`;
-    const file = new File([blob], fileName, { type: blob.type });
+    const fileName = makeExcelFileName();
 
+    if (mode === "save") {
+      downloadBlob(blob, fileName);
+      return;
+    }
+
+    const file = new File([blob], fileName, { type: blob.type });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
         await navigator.share({ files: [file], title: "فایل اکسل تیپاکس" });
@@ -606,6 +612,14 @@ document.getElementById("exportButton").addEventListener("click", async () => {
     btn.textContent = originalText;
     btn.disabled = false;
   }
+}
+
+document.getElementById("exportButton").addEventListener("click", () => {
+  runExcelAction(document.getElementById("exportButton"), "share");
+});
+
+document.getElementById("saveButton").addEventListener("click", () => {
+  runExcelAction(document.getElementById("saveButton"), "save");
 });
 
 function downloadBlob(blob, fileName) {
