@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>فرم مرسولات تیپاکس</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a7a3d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="فرم تیپاکس">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<style>
+  :root{
+    --brand-green:#0a7a3d;
+    --brand-green-dark:#075c2e;
+    --bg:#f4f5f7;
+    --card-bg:#ffffff;
+    --border:#e3e5e9;
+    --text-main:#1c1c1e;
+    --text-muted:#666666;
+    --danger:#c40017;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:Tahoma, "Segoe UI", Arial, sans-serif;
+    background:var(--bg);
+    color:var(--text-main);
+  }
+  .screen{min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 16px 60px;}
+  .card{width:100%; max-width:480px; background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:22px; box-shadow:0 2px 10px rgba(0,0,0,0.04);}
+  h1{font-size:19px; margin:0 0 6px; text-align:center;}
+  .subtitle{font-size:13px; color:var(--text-muted); text-align:center; margin-bottom:18px; line-height:1.9;}
+  .device-code{
+    font-size:26px; font-weight:bold; letter-spacing:3px; color:var(--brand-green);
+    text-align:center; direction:ltr; background:#f6fff9; border:1px solid #cdebd7;
+    border-radius:10px; padding:14px; margin-bottom:8px; user-select:all;
+  }
+  .device-hint{font-size:12px; color:var(--text-muted); text-align:center; margin-bottom:18px; line-height:1.9;}
+  label{display:block; font-size:13px; color:#444; margin-bottom:6px; font-weight:bold;}
+  input[type=text], input[type=tel], input[type=password], input[type=number], textarea, select{
+    display:block; width:100%; padding:12px; border:1px solid #ddd; border-radius:8px;
+    font-family:inherit; font-size:15px; margin-bottom:12px; background:#fff; color:var(--text-main);
+  }
+  textarea{resize:vertical; min-height:70px;}
+  .field-error{color:var(--danger); font-size:12px; margin:-8px 0 10px; display:none;}
+  .btn{
+    display:block; width:100%; padding:13px; border:none; border-radius:9px; font-family:inherit;
+    font-size:15px; cursor:pointer; margin-top:6px;
+  }
+  .btn-primary{background:var(--brand-green); color:#fff;}
+  .btn-primary:hover{background:var(--brand-green-dark);}
+  .btn-outline-danger{background:#fff; color:var(--danger); border:1px solid var(--danger);}
+  .btn-text{background:none; color:var(--brand-green); padding:4px; width:auto; font-size:13px; text-decoration:underline;}
+  .error-text{color:var(--danger); font-size:13px; text-align:center; min-height:18px; margin-bottom:6px;}
+  .top-row{display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;}
+  .top-row h2{font-size:17px; margin:0;}
+  .count-text{font-size:12px; color:var(--text-muted); margin:10px 0;}
+  .row-item{display:flex; align-items:flex-start; gap:10px; border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:8px; background:#fafafa;}
+  .row-item .row-body{flex:1; font-size:13px; line-height:1.8;}
+  .row-item .row-name{font-weight:bold;}
+  .row-item .row-details{color:var(--text-muted);}
+  .row-delete{background:none; border:none; color:var(--danger); font-size:18px; cursor:pointer; padding:2px 6px;}
+  .divider{height:1px; background:var(--border); margin:18px 0;}
+  .city-wrap{position:relative;}
+  .city-dropdown{
+    position:absolute; z-index:5; top:calc(100% - 10px); right:0; left:0; background:#fff;
+    border:1px solid #ddd; border-radius:8px; max-height:220px; overflow-y:auto; display:none;
+    box-shadow:0 4px 14px rgba(0,0,0,0.08);
+  }
+  .city-dropdown div{padding:10px 12px; font-size:14px; cursor:pointer; border-bottom:1px solid #f0f0f0;}
+  .city-dropdown div:last-child{border-bottom:none;}
+  .city-dropdown div:hover{background:#f6fff9;}
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center;
+    justify-content:center; padding:16px; z-index:50;
+  }
+  .modal-backdrop.show{display:flex;}
+  .modal-box{background:#fff; border-radius:14px; padding:20px; width:100%; max-width:420px;}
+  .modal-box h3{margin-top:0; font-size:16px;}
+  .modal-actions{display:flex; gap:10px; margin-top:4px;}
+  .modal-actions .btn{margin-top:0;}
+  .hidden{display:none !important;}
+  .offline-badge{display:inline-block; background:#e8f7ee; color:var(--brand-green); border:1px solid #bfe8cf; border-radius:20px; padding:3px 12px; font-size:11px; margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<!-- ===================== صفحه‌ی قفل ===================== -->
+<div class="screen" id="lockScreen">
+  <div class="card">
+    <h1>فرم مرسولات تیپاکس</h1>
+    <div class="subtitle" id="lockSubtitle"></div>
+
+    <div class="device-code hidden" id="deviceCodeText"></div>
+    <div class="device-hint hidden" id="deviceCodeHint">
+      روی کد بالا لمس نگه‌دار تا کپی بشه؛ همین کد رو برای احسان بفرست و کد فعال‌سازی رو ازش بگیر.
+    </div>
+
+    <label id="passwordLabel">رمز عبور</label>
+    <input type="password" id="passwordInput" autocomplete="off" inputmode="text">
+
+    <div id="confirmWrap" class="hidden">
+      <label>تکرار رمز عبور</label>
+      <input type="password" id="confirmInput" autocomplete="off">
+    </div>
+
+    <div class="error-text" id="lockErrorText"></div>
+    <button class="btn btn-primary" id="lockActionButton">ورود</button>
+  </div>
+</div>
+
+<!-- ===================== صفحه‌ی اصلی ===================== -->
+<div class="screen hidden" id="mainScreen">
+  <div class="card">
+    <div class="top-row">
+      <h2>فرم سریع مرسولات تیپاکس</h2>
+      <button class="btn-text" id="changePasswordText">تغییر رمز</button>
+    </div>
+    <div class="subtitle" style="text-align:right; margin-bottom:14px;">
+      برای هر گیرنده این ۴ فیلد رو پر کن و به لیست اضافه کن؛ در آخر فایل اکسل تیپاکس ساخته می‌شه.
+    </div>
+
+    <label>نام و نام خانوادگی گیرنده</label>
+    <input type="text" id="nameInput">
+    <div class="field-error" id="nameError"></div>
+
+    <label>شهر مقصد</label>
+    <div class="city-wrap">
+      <input type="text" id="cityInput" autocomplete="off">
+      <div class="city-dropdown" id="cityDropdown"></div>
+    </div>
+    <div class="field-error" id="cityError"></div>
+
+    <label>آدرس کامل گیرنده</label>
+    <textarea id="addressInput"></textarea>
+    <div class="field-error" id="addressError"></div>
+
+    <label>شماره موبایل گیرنده</label>
+    <input type="tel" id="phoneInput" maxlength="11" placeholder="09123456789">
+    <div class="field-error" id="phoneError"></div>
+
+    <button class="btn btn-primary" id="addRowButton">افزودن به لیست</button>
+
+    <div class="divider"></div>
+
+    <div class="count-text" id="listCountText"></div>
+    <div id="rowsList"></div>
+
+    <button class="btn btn-primary" id="exportButton" style="margin-top:14px;">ساخت فایل اکسل و اشتراک‌گذاری</button>
+    <button class="btn btn-outline-danger" id="clearButton">پاک کردن لیست</button>
+  </div>
+</div>
+
+<!-- ===================== مودال تغییر رمز ===================== -->
+<div class="modal-backdrop" id="changePwdModal">
+  <div class="modal-box">
+    <h3>تغییر رمز اپ</h3>
+    <label>رمز فعلی</label>
+    <input type="password" id="curPwdInput">
+    <label>رمز جدید</label>
+    <input type="password" id="newPwdInput">
+    <label>تکرار رمز جدید</label>
+    <input type="password" id="newPwdConfirmInput">
+    <div class="error-text" id="changePwdError"></div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="changePwdSaveBtn">تغییر رمز</button>
+      <button class="btn btn-outline-danger" id="changePwdCancelBtn">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== مودال تایید پاک‌کردن ===================== -->
+<div class="modal-backdrop" id="confirmClearModal">
+  <div class="modal-box">
+    <h3>پاک کردن لیست</h3>
+    <p id="confirmClearText" style="font-size:14px; color:var(--text-muted);"></p>
+    <div class="modal-actions">
+      <button class="btn btn-outline-danger" id="confirmClearYes">بله، پاک کن</button>
+      <button class="btn btn-primary" id="confirmClearNo">انصراف</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   ثابت‌ها (دقیقاً هم‌خونی با نسخه‌ی اندروید و activation_tool.html)
+   ============================================================ */
+const ACTIVATION_SECRET = "tipax-rezashahr-excelfiller-activation-secret-2026";
+const PASSWORD_SALT = "tipax-excel-filler-v1-";
+const FIRST_DATA_ROW = 2;
+const MAX_DATA_ROW = 1900;
+const MAX_ROWS = MAX_DATA_ROW - FIRST_DATA_ROW + 1; // 1899
+const SHEET1_ENTRY = "xl/worksheets/sheet1.xml";
+
+const LS_DEVICE_CODE = "tipax_device_code";
+const LS_ACTIVATED_DEVICE = "tipax_activated_device";
+const LS_PWD_HASH = "tipax_pwd_hash";
+const LS_ROWS = "tipax_rows";
+
+/* ============================================================
+   ابزارهای رمزنگاری (Web Crypto)
+   ============================================================ */
+async function sha256Hex(text) {
+  const enc = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest("SHA-256", enc);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function hashPassword(pwd) {
+  return sha256Hex(PASSWORD_SALT + pwd);
+}
+
+async function hmacSha256Bytes(secret, message) {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(message));
+  return new Uint8Array(sig);
+}
+
+function bytesToBigIntMod(bytes, mod) {
+  let result = 0n;
+  for (const b of bytes) result = (result * 256n + BigInt(b)) % mod;
+  return result;
+}
+
+async function activationCodeFor(deviceCode) {
+  const bytes = await hmacSha256Bytes(ACTIVATION_SECRET, deviceCode);
+  const num = bytesToBigIntMod(bytes, 1000000n);
+  return num.toString().padStart(6, "0");
+}
+
+function getOrCreateDeviceCode() {
+  let code = localStorage.getItem(LS_DEVICE_CODE);
+  if (code) return code;
+  const bytes = new Uint8Array(4);
+  crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes).map(b => b.toString(16).toUpperCase().padStart(2, "0")).join("");
+  code = hex.substring(0, 4) + "-" + hex.substring(4, 8);
+  localStorage.setItem(LS_DEVICE_CODE, code);
+  return code;
+}
+
+/* ============================================================
+   قفل ورود: فعال‌سازی گوشی -> تعریف رمز -> ورود عادی
+   ============================================================ */
+const lockScreen = document.getElementById("lockScreen");
+const mainScreen = document.getElementById("mainScreen");
+const lockSubtitle = document.getElementById("lockSubtitle");
+const deviceCodeText = document.getElementById("deviceCodeText");
+const deviceCodeHint = document.getElementById("deviceCodeHint");
+const passwordLabel = document.getElementById("passwordLabel");
+const passwordInput = document.getElementById("passwordInput");
+const confirmWrap = document.getElementById("confirmWrap");
+const confirmInput = document.getElementById("confirmInput");
+const lockErrorText = document.getElementById("lockErrorText");
+const lockActionButton = document.getElementById("lockActionButton");
+
+let lockMode = "ACTIVATION"; // ACTIVATION | SETUP_PASSWORD | LOGIN
+let myDeviceCode = "";
+
+async function initLock() {
+  myDeviceCode = getOrCreateDeviceCode();
+  const activatedFor = localStorage.getItem(LS_ACTIVATED_DEVICE);
+  const hasPassword = !!localStorage.getItem(LS_PWD_HASH);
+
+  if (activatedFor !== myDeviceCode) lockMode = "ACTIVATION";
+  else if (!hasPassword) lockMode = "SETUP_PASSWORD";
+  else lockMode = "LOGIN";
+
+  setupLockUi();
+}
+
+function setupLockUi() {
+  lockErrorText.textContent = "";
+  passwordInput.value = "";
+  confirmInput.value = "";
+
+  if (lockMode === "ACTIVATION") {
+    deviceCodeText.classList.remove("hidden");
+    deviceCodeHint.classList.remove("hidden");
+    deviceCodeText.textContent = myDeviceCode;
+    lockSubtitle.textContent = "این صفحه باید توسط احسان فعال بشه. کد بالا رو براش بفرست و کد فعال‌سازی ۶ رقمی که برات می‌فرسته رو اینجا وارد کن.";
+    confirmWrap.classList.add("hidden");
+    passwordLabel.textContent = "کد فعال‌سازی (۶ رقم)";
+    passwordInput.type = "text";
+    passwordInput.inputMode = "numeric";
+    passwordInput.maxLength = 6;
+    lockActionButton.textContent = "فعال‌سازی";
+  } else if (lockMode === "SETUP_PASSWORD") {
+    deviceCodeText.classList.add("hidden");
+    deviceCodeHint.classList.add("hidden");
+    lockSubtitle.textContent = "فعال شد. حالا یه رمز برای خودت تعریف کن تا بقیه نتونن بدون اجازه از این صفحه استفاده کنن.";
+    confirmWrap.classList.remove("hidden");
+    passwordLabel.textContent = "رمز عبور";
+    passwordInput.type = "password";
+    passwordInput.removeAttribute("maxlength");
+    lockActionButton.textContent = "تنظیم رمز و ادامه";
+  } else {
+    deviceCodeText.classList.add("hidden");
+    deviceCodeHint.classList.add("hidden");
+    lockSubtitle.textContent = "برای ادامه، رمز عبور رو وارد کن.";
+    confirmWrap.classList.add("hidden");
+    passwordLabel.textContent = "رمز عبور";
+    passwordInput.type = "password";
+    passwordInput.removeAttribute("maxlength");
+    lockActionButton.textContent = "ورود";
+  }
+}
+
+deviceCodeText.addEventListener("click", () => {
+  if (!myDeviceCode) return;
+  navigator.clipboard?.writeText(myDeviceCode).then(() => {
+    lockErrorText.style.color = "var(--brand-green)";
+    lockErrorText.textContent = "کد کپی شد";
+    setTimeout(() => { lockErrorText.textContent = ""; lockErrorText.style.color = "var(--danger)"; }, 1500);
+  }).catch(() => {});
+});
+
+lockActionButton.addEventListener("click", async () => {
+  lockErrorText.textContent = "";
+  if (lockMode === "ACTIVATION") {
+    const entered = passwordInput.value.trim();
+    const expected = await activationCodeFor(myDeviceCode);
+    if (entered === expected) {
+      localStorage.setItem(LS_ACTIVATED_DEVICE, myDeviceCode);
+      lockMode = localStorage.getItem(LS_PWD_HASH) ? "LOGIN" : "SETUP_PASSWORD";
+      setupLockUi();
+    } else {
+      lockErrorText.textContent = "کد فعال‌سازی اشتباهه. مطمئن شو همون کدی که احسان برای این دستگاه فرستاده رو وارد کردی.";
+    }
+  } else if (lockMode === "SETUP_PASSWORD") {
+    const p1 = passwordInput.value;
+    const p2 = confirmInput.value;
+    if (p1.length < 4) { lockErrorText.textContent = "رمز باید حداقل ۴ کاراکتر باشه"; return; }
+    if (p1 !== p2) { lockErrorText.textContent = "رمز و تکرارش یکی نیستن"; return; }
+    localStorage.setItem(LS_PWD_HASH, await hashPassword(p1));
+    proceedToApp();
+  } else {
+    const entered = passwordInput.value;
+    const stored = localStorage.getItem(LS_PWD_HASH);
+    if (stored && stored === await hashPassword(entered)) {
+      proceedToApp();
+    } else {
+      lockErrorText.textContent = "رمز اشتباهه، دوباره امتحان کن";
+      passwordInput.value = "";
+    }
+  }
+});
+
+function proceedToApp() {
+  lockScreen.classList.add("hidden");
+  mainScreen.classList.remove("hidden");
+  initMainScreen();
+}
+
+/* ============================================================
+   صفحه‌ی اصلی: فرم و لیست مرسولات
+   ============================================================ */
+let cityList = [];
+let rows = [];
+let mainInited = false;
+
+async function loadCities() {
+  try {
+    const res = await fetch("cities.json");
+    cityList = await res.json();
+  } catch (e) {
+    cityList = [];
+  }
+}
+
+function loadRowsFromStorage() {
+  try {
+    const raw = localStorage.getItem(LS_ROWS);
+    rows = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    rows = [];
+  }
+}
+
+function saveRowsToStorage() {
+  try { localStorage.setItem(LS_ROWS, JSON.stringify(rows)); } catch (e) {}
+}
+
+async function initMainScreen() {
+  if (mainInited) return;
+  mainInited = true;
+  await loadCities();
+  loadRowsFromStorage();
+  renderRows();
+  setupCityAutocomplete();
+}
+
+const nameInput = document.getElementById("nameInput");
+const cityInput = document.getElementById("cityInput");
+const addressInput = document.getElementById("addressInput");
+const phoneInput = document.getElementById("phoneInput");
+const nameError = document.getElementById("nameError");
+const cityError = document.getElementById("cityError");
+const addressError = document.getElementById("addressError");
+const phoneError = document.getElementById("phoneError");
+const listCountText = document.getElementById("listCountText");
+const rowsList = document.getElementById("rowsList");
+const cityDropdown = document.getElementById("cityDropdown");
+
+function setupCityAutocomplete() {
+  cityInput.addEventListener("input", () => {
+    const q = cityInput.value.trim();
+    if (!q) { cityDropdown.style.display = "none"; return; }
+    const matches = cityList.filter(c => c.indexOf(q) !== -1).slice(0, 30);
+    if (matches.length === 0) { cityDropdown.style.display = "none"; return; }
+    cityDropdown.innerHTML = "";
+    matches.forEach(c => {
+      const div = document.createElement("div");
+      div.textContent = c;
+      div.addEventListener("click", () => {
+        cityInput.value = c;
+        cityDropdown.style.display = "none";
+      });
+      cityDropdown.appendChild(div);
+    });
+    cityDropdown.style.display = "block";
+  });
+  document.addEventListener("click", (e) => {
+    if (e.target !== cityInput) cityDropdown.style.display = "none";
+  });
+}
+
+function clearFieldErrors() {
+  [nameError, cityError, addressError, phoneError].forEach(el => { el.style.display = "none"; el.textContent = ""; });
+}
+function showFieldError(el, msg) { el.textContent = msg; el.style.display = "block"; }
+
+function updateCountText() {
+  listCountText.textContent = rows.length === 0
+    ? "هنوز هیچ ردیفی اضافه نشده"
+    : `${rows.length} ردیف اضافه شده (حداکثر ${MAX_ROWS} ردیف تو یه فایل جا می‌شه)`;
+}
+
+function renderRows() {
+  rowsList.innerHTML = "";
+  rows.forEach((row, idx) => {
+    const item = document.createElement("div");
+    item.className = "row-item";
+    item.innerHTML = `
+      <div class="row-body">
+        <div class="row-name">${idx + 1}. ${escapeHtml(row.name)}</div>
+        <div class="row-details">${escapeHtml(row.city)} — ${escapeHtml(row.address)} — ${escapeHtml(row.phone)}</div>
+      </div>
+      <button class="row-delete" data-idx="${idx}">✕</button>
+    `;
+    item.querySelector(".row-delete").addEventListener("click", () => {
+      rows.splice(idx, 1);
+      saveRowsToStorage();
+      renderRows();
+      updateCountText();
+    });
+    rowsList.appendChild(item);
+  });
+  updateCountText();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+document.getElementById("addRowButton").addEventListener("click", () => {
+  clearFieldErrors();
+  const name = nameInput.value.trim();
+  const city = cityInput.value.trim();
+  const address = addressInput.value.trim();
+  const phone = phoneInput.value.trim();
+
+  let hasError = false;
+  if (!name) { showFieldError(nameError, "نام گیرنده رو وارد کن"); hasError = true; }
+  if (!city) { showFieldError(cityError, "شهر مقصد رو وارد کن"); hasError = true; }
+  else if (cityList.length && cityList.indexOf(city) === -1) { showFieldError(cityError, "این شهر تو لیست شهرهای تیپاکس نیست - از پیشنهادها انتخاب کن"); hasError = true; }
+  if (!address) { showFieldError(addressError, "آدرس کامل رو وارد کن"); hasError = true; }
+  if (!phone) { showFieldError(phoneError, "شماره موبایل رو وارد کن"); hasError = true; }
+  else if (!/^[0-9]{11}$/.test(phone)) { showFieldError(phoneError, "شماره موبایل باید دقیقاً ۱۱ رقم باشه (مثلاً 09123456789)"); hasError = true; }
+  if (hasError) return;
+
+  if (rows.length >= MAX_ROWS) {
+    alert("ظرفیت فایل پر شده؛ اول یه فایل اکسل بساز و لیست رو پاک کن.");
+    return;
+  }
+
+  rows.push({ name, city, address, phone });
+  saveRowsToStorage();
+  renderRows();
+
+  nameInput.value = ""; cityInput.value = ""; addressInput.value = ""; phoneInput.value = "";
+  nameInput.focus();
+});
+
+/* ------------------ پاک کردن لیست ------------------ */
+const confirmClearModal = document.getElementById("confirmClearModal");
+document.getElementById("clearButton").addEventListener("click", () => {
+  if (rows.length === 0) return;
+  document.getElementById("confirmClearText").textContent = `مطمئنی می‌خوای همه‌ی ${rows.length} ردیف رو پاک کنی؟`;
+  confirmClearModal.classList.add("show");
+});
+document.getElementById("confirmClearNo").addEventListener("click", () => confirmClearModal.classList.remove("show"));
+document.getElementById("confirmClearYes").addEventListener("click", () => {
+  rows = [];
+  saveRowsToStorage();
+  renderRows();
+  confirmClearModal.classList.remove("show");
+});
+
+/* ------------------ تغییر رمز ------------------ */
+const changePwdModal = document.getElementById("changePwdModal");
+document.getElementById("changePasswordText").addEventListener("click", () => {
+  document.getElementById("curPwdInput").value = "";
+  document.getElementById("newPwdInput").value = "";
+  document.getElementById("newPwdConfirmInput").value = "";
+  document.getElementById("changePwdError").textContent = "";
+  changePwdModal.classList.add("show");
+});
+document.getElementById("changePwdCancelBtn").addEventListener("click", () => changePwdModal.classList.remove("show"));
+document.getElementById("changePwdSaveBtn").addEventListener("click", async () => {
+  const errEl = document.getElementById("changePwdError");
+  errEl.textContent = "";
+  const current = document.getElementById("curPwdInput").value;
+  const newPwd = document.getElementById("newPwdInput").value;
+  const confirm = document.getElementById("newPwdConfirmInput").value;
+  const storedHash = localStorage.getItem(LS_PWD_HASH);
+
+  if (!storedHash || storedHash !== await hashPassword(current)) { errEl.textContent = "رمز فعلی اشتباهه"; return; }
+  if (newPwd.length < 4) { errEl.textContent = "رمز جدید باید حداقل ۴ کاراکتر باشه"; return; }
+  if (newPwd !== confirm) { errEl.textContent = "رمز جدید و تکرارش یکی نیستن"; return; }
+
+  localStorage.setItem(LS_PWD_HASH, await hashPassword(newPwd));
+  changePwdModal.classList.remove("show");
+  alert("رمز با موفقیت عوض شد.");
+});
+
+/* ============================================================
+   ساخت فایل اکسل (دقیقاً همون منطق نسخه‌ی اندروید، با JSZip)
+   ============================================================ */
+function xmlEscape(text) {
+  return String(text)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/\r\n/g, " ").replace(/\n/g, " ");
+}
+
+function buildSheetXml(template, rowsData) {
+  const values = {};
+  rowsData.forEach((row, idx) => {
+    const r = FIRST_DATA_ROW + idx;
+    values["E" + r] = row.name;
+    values["F" + r] = row.city;
+    values["G" + r] = row.address;
+    values["I" + r] = row.phone;
+  });
+  const cellRegex = /<x:c r="([A-Z]+[0-9]+)"([^>]*)\/>/g;
+  return template.replace(cellRegex, (match, cellRef, attrs) => {
+    const text = values[cellRef];
+    if (text === undefined) return match;
+    return `<x:c r="${cellRef}"${attrs} t="inlineStr"><x:is><x:t>${xmlEscape(text)}</x:t></x:is></x:c>`;
+  });
+}
+
+async function buildExcelBlob(rowsData) {
+  const res = await fetch("template.xlsx");
+  const templateBuffer = await res.arrayBuffer();
+  const zip = await JSZip.loadAsync(templateBuffer);
+  const sheetFile = zip.file(SHEET1_ENTRY);
+  if (!sheetFile) throw new Error("فایل قالب خراب یا ناقصه");
+  const sheetXml = await sheetFile.async("string");
+  const filledXml = buildSheetXml(sheetXml, rowsData);
+  zip.file(SHEET1_ENTRY, filledXml);
+  return zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+document.getElementById("exportButton").addEventListener("click", async () => {
+  if (rows.length === 0) { alert("اول حداقل یه ردیف به لیست اضافه کن."); return; }
+  const btn = document.getElementById("exportButton");
+  const originalText = btn.textContent;
+  btn.textContent = "در حال ساخت فایل...";
+  btn.disabled = true;
+  try {
+    const blob = await buildExcelBlob(rows);
+    const now = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    const fileName = `tipax_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.xlsx`;
+    const file = new File([blob], fileName, { type: blob.type });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: "فایل اکسل تیپاکس" });
+      } catch (shareErr) {
+        if (shareErr && shareErr.name !== "AbortError") downloadBlob(blob, fileName);
+      }
+    } else {
+      downloadBlob(blob, fileName);
+    }
+  } catch (e) {
+    alert("خطا در ساخت فایل: " + e.message);
+  } finally {
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
+});
+
+function downloadBlob(blob, fileName) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+/* ============================================================
+   شروع
+   ============================================================ */
+initLock();
+
+/* ثبت Service Worker برای حالت PWA (اختیاری، اگه فایلش موجود باشه) */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+
+})();
+</script>
+</body>
+</html>
