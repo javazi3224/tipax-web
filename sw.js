@@ -5,8 +5,6 @@ const CORE_ASSETS = [
   "./cities.json",
   "./template.xlsx",
   "./manifest.webmanifest",
-  "./icon-192.png",
-  "./icon-512.png",
   "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
 ];
 
