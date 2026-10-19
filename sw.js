@@ -1,9 +1,10 @@
-const CACHE_NAME = "tipax-form-v2";
+const CACHE_NAME = "tipax-form-v3";
 const CORE_ASSETS = [
   "./",
   "./index.html",
   "./cities.json",
   "./template.xlsx",
+  "./template2.xlsx",
   "./manifest.webmanifest",
   "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
 ];
