@@ -1,4 +1,4 @@
-const CACHE_NAME = "tipax-form-v1";
+const CACHE_NAME = "tipax-form-v2";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -29,6 +29,21 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  // برای ناوبری صفحه (یعنی خود index.html)، اول شبکه رو امتحان کن تا همیشه آخرین نسخه بیاد؛
+  // فقط وقتی آفلاینه از کش استفاده کن. این باعث می‌شه بعد از آپدیت صفحه، کاربر همیشه نسخه‌ی جدید رو ببینه.
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
