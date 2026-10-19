@@ -147,6 +147,12 @@
     <div class="count-text" id="listCountText"></div>
     <div id="rowsList"></div>
 
+    <label style="margin-top:4px;">نوع قیمت‌گذاری</label>
+    <select id="priceTypeSelect">
+      <option value="fixed">قیمت ثابت</option>
+      <option value="variable">قیمت متغیر</option>
+    </select>
+
     <button class="btn btn-primary" id="exportButton" style="margin-top:14px;">ساخت فایل اکسل و اشتراک‌گذاری</button>
     <button class="btn btn-primary hidden" id="shareRetryButton" style="margin-top:8px;">تلاش دوباره برای اشتراک‌گذاری</button>
     <button class="btn btn-primary" id="saveButton" style="margin-top:8px;">ذخیره فایل اکسل در گوشی</button>
@@ -364,7 +370,15 @@ function proceedToApp() {
 let cityList = [];
 let rows = [];
 let mainInited = false;
-let templateBufferPromise = null;
+
+/* دو تا فایل قالب داریم: قیمت ثابت (همون فایل همیشگی) و قیمت متغیر (فایل جدید).
+   هر دو عیناً همون چیدمان ستونی رو دارن (E=نام، F=شهر، G=آدرس، I=موبایل)،
+   پس همون منطق پر کردن برای هر دو کار می‌کنه؛ فقط فایل قالب فرق می‌کنه. */
+const PRICE_TEMPLATES = {
+  fixed: "template.xlsx",
+  variable: "template2.xlsx",
+};
+const templateBufferPromises = {};
 
 async function loadCities() {
   try {
@@ -375,14 +389,18 @@ async function loadCities() {
   }
 }
 
-/* از قبل (همون موقع که وارد صفحه‌ی اصلی می‌شه) فایل قالب رو تو حافظه می‌گیریم
+/* از قبل (همون موقع که وارد صفحه‌ی اصلی می‌شه) هر دو فایل قالب رو تو حافظه می‌گیریم
    تا موقع زدن دکمه‌ی اشتراک‌گذاری، فقط کارهای سریع و بدون تاخیر شبکه انجام بشه؛
    این‌طوری تاییدِ لمسِ کاربر (که navigator.share بهش نیاز داره) از بین نمی‌ره. */
-function preloadTemplateBuffer() {
-  if (!templateBufferPromise) {
-    templateBufferPromise = fetch("template.xlsx").then(res => res.arrayBuffer());
+function preloadTemplateBuffer(key) {
+  if (!templateBufferPromises[key]) {
+    templateBufferPromises[key] = fetch(PRICE_TEMPLATES[key]).then(res => res.arrayBuffer());
   }
-  return templateBufferPromise;
+  return templateBufferPromises[key];
+}
+
+function preloadAllTemplates() {
+  Object.keys(PRICE_TEMPLATES).forEach(key => preloadTemplateBuffer(key));
 }
 
 function loadRowsFromStorage() {
@@ -405,7 +423,7 @@ async function initMainScreen() {
   loadRowsFromStorage();
   renderRows();
   setupCityAutocomplete();
-  preloadTemplateBuffer();
+  preloadAllTemplates();
 }
 
 const nameInput = document.getElementById("nameInput");
@@ -577,9 +595,12 @@ function buildSheetXml(template, rowsData) {
   });
 }
 
+const priceTypeSelect = document.getElementById("priceTypeSelect");
+
 async function buildExcelBlob(rowsData) {
+  const priceType = PRICE_TEMPLATES[priceTypeSelect.value] ? priceTypeSelect.value : "fixed";
   // اگه از قبل تو حافظه آماده شده باشه (preloadTemplateBuffer)، دیگه صبر شبکه لازم نیست
-  const templateBuffer = await preloadTemplateBuffer();
+  const templateBuffer = await preloadTemplateBuffer(priceType);
   const zip = await JSZip.loadAsync(templateBuffer);
   const sheetFile = zip.file(SHEET1_ENTRY);
   if (!sheetFile) throw new Error("فایل قالب خراب یا ناقصه");
@@ -592,7 +613,8 @@ async function buildExcelBlob(rowsData) {
 function makeExcelFileName() {
   const now = new Date();
   const pad = n => String(n).padStart(2, "0");
-  return `tipax_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.xlsx`;
+  const priceType = priceTypeSelect.value === "variable" ? "variable" : "fixed";
+  return `tipax_${priceType}_${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.xlsx`;
 }
 
 const shareRetryButton = document.getElementById("shareRetryButton");
